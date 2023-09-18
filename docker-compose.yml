@@ -11,6 +11,8 @@ services:
     depends_on:
       - fio_service_pg
       - kafka
+    ports:
+      - 3000:3000
     networks:
       microservicesnet:
         ipv4_address: 192.168.4.3
