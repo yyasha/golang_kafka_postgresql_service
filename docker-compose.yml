@@ -1,0 +1,76 @@
+version: '3'
+
+services:
+  fio_service:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: fio_service
+    restart: unless-stopped
+    env_file: .env
+    depends_on:
+      - fio_service_pg
+      - kafka
+    networks:
+      microservicesnet:
+        ipv4_address: 192.168.4.3
+
+  fio_service_pg:
+    image: postgres:latest
+    container_name: fio_service_pg
+    restart: unless-stopped
+    env_file: .env
+    environment:
+      POSTGRES_DB: $DB_NAME
+      POSTGRES_USER: $DB_USER
+      POSTGRES_PASSWORD: $DB_PASSWORD
+      PGDATA: "/var/lib/postgresql/data/pgdata"
+    volumes:
+      - ./pg_data:/var/lib/postgresql/data
+    networks:
+      microservicesnet:
+        ipv4_address: 192.168.4.4
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      microservicesnet:
+        ipv4_address: 192.168.4.6
+  
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - zookeeper
+    ports:
+      - 29092:29092
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    networks:
+      microservicesnet:
+        ipv4_address: 192.168.4.5
+
+  redis:
+    image: redis:6.2-alpine
+    restart: unless-stopped
+    env_file: .env
+    command: redis-server --save 20 1 --loglevel warning --requirepass $RDB_PASSWORD
+    volumes: 
+      - ./cache:/date
+    networks:
+      microservicesnet:
+        ipv4_address: 192.168.4.7
+
+networks:
+  microservicesnet:
+    ipam:
+      driver: default
+      config:
+        - subnet: "192.168.4.0/24"

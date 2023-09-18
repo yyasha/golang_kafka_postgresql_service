@@ -1,0 +1,82 @@
+# GraphQL schema example
+#
+# https://gqlgen.com/getting-started/
+
+# type Todo {
+#   id: ID!
+#   text: String!
+#   done: Boolean!
+#   user: User!
+# }
+
+# type User {
+#   id: ID!
+#   name: String!
+# }
+
+# type Query {
+#   todos: [Todo!]!
+# }
+
+# input NewTodo {
+#   text: String!
+#   userId: String!
+# }
+
+# type Mutation {
+#   createTodo(input: NewTodo!): Todo!
+# }
+
+type FIO {
+  id: Int
+  name: String
+  surname: String
+  patronymic: String
+  age: Int
+  gender: String
+  nationality: String
+}
+
+input UpdateFIO {
+  id: Int!
+  name: String
+  surname: String
+  patronymic: String
+  age: Int
+  gender: String
+  nationality: String
+}
+
+input SearchData {
+  name: String
+  surname: String
+  patronymic: String
+  age_down: Int
+  age_up: Int
+  gender: String
+  nationality: String
+}
+
+input NewFIO {
+  name: String!
+  surname: String!
+  patronymic: String
+}
+
+type Status {
+  error: Boolean!
+  msg: String
+}
+
+type UsersResponse {
+  error: Boolean!
+  msg: String
+  user_list: [FIO]
+}
+
+type Query {
+  get_users(limit: Int = 15, offset: Int = 0, searchData: SearchData): UsersResponse!
+  del_user(Id: ID!): Status!
+  edit_user(fio: UpdateFIO!): Status!
+  add_user(input: NewFIO!): Status!
+}
