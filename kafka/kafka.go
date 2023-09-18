@@ -6,6 +6,7 @@ import (
 	"fio_service/config"
 	externalapis "fio_service/external_apis"
 	"fio_service/postgres"
+	"fio_service/redis"
 	"fio_service/structs"
 	"log"
 	"runtime"
@@ -22,7 +23,7 @@ func ConsumeMessages() {
 		Partition: 0,
 		MaxBytes:  10e6, // 10MB
 	})
-	r.SetOffset(0)
+	r.SetOffset(redis.RDB.GetKafkaOffset())
 	log.Println("Kafka listener started")
 	for {
 		m, err := r.ReadMessage(context.Background())
@@ -30,6 +31,8 @@ func ConsumeMessages() {
 			break
 		}
 		log.Printf("message at offset %d: = %s\n", m.Offset, string(m.Value))
+		err = redis.RDB.SetKafkaOffset(m.Offset + 1)
+		error_logging(err)
 		// decode json
 		var u structs.FIO
 		err = json.Unmarshal(m.Value, &u)
