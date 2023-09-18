@@ -28,7 +28,8 @@ func ConsumeMessages() {
 	for {
 		m, err := r.ReadMessage(context.Background())
 		if err != nil {
-			break
+			error_logging(err)
+			continue
 		}
 		log.Printf("message at offset %d: = %s\n", m.Offset, string(m.Value))
 		err = redis.RDB.SetKafkaOffset(m.Offset + 1)
@@ -39,26 +40,26 @@ func ConsumeMessages() {
 		if err != nil {
 			error_logging(err)
 			SendFIOError("Некорректный json")
-			break
+			continue
 		}
 		// validate data
 		if u.Name == "" || u.Surname == "" {
 			SendFIOError("Нет обязательного поля")
-			break
+			continue
 		}
 		// gen user data
 		err = externalapis.GenUserData(&u)
 		if err != nil {
 			error_logging(err)
 			SendFIOError("Ошибка с генерацией дополнительных данных")
-			break
+			continue
 		}
 		// insert to db
 		err = postgres.DB.AddUser(u)
 		if err != nil {
 			error_logging(err)
 			SendFIOError("Ошибка при добавлении пользователя в базу данных")
-			break
+			continue
 		}
 	}
 
